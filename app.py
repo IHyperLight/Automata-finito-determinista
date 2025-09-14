@@ -7,55 +7,54 @@ import automaton
 
 app = Flask(__name__)
 
-app.secret_key = 'llave_secreta'
+app.secret_key = "llave_secreta"
 
 
 class UrlForm(Form):
-    url = StringField('url', [validators.URL(
-        require_tld=True, message=None)])
+    url = StringField("url", [validators.URL(require_tld=True, message=None)])
 
 
 def generateFile(link):
     urls = []
-    #clean = "href=|\'|\""
-    clean = "\'|\""
+    # clean = "href=|\'|\""
+    clean = "'|\""
     page = urllib.request.urlopen(link)
-    html = page.read().decode('UTF-8')
+    html = page.read().decode("UTF-8")
     soup = BeautifulSoup(html, "html.parser")
-    text = soup.title.string
-    string = text.get_text()
+    text = soup.title.string if soup.title else "untitled"
+    string = text
     title = re.sub(r"[^a-zA-Z0-9 ]", "", string)
     found = automaton.executeAutomaton(html)
     for url in found:
         url = re.sub(clean, "", url)
         urls.append(url)
     with open(f"files/{title}.txt", "w") as file:
-        file.write(f"ENLACES EXTERNOS ENCONTRADOS EN \"{title}\"\n\n")
+        file.write(f'ENLACES EXTERNOS ENCONTRADOS EN "{title}"\n\n')
         for line in urls:
             file.write(f"{line}\n")
     return file
 
 
-@app.route('/', methods=['GET', 'POST'])
+@app.route("/", methods=["GET", "POST"])
 def front():
     data = ""
     form = UrlForm(request.form)
-    if request.method == 'POST':
+    if request.method == "POST":
         data = form.url.data
         if form.validate():
             try:
                 path = generateFile(data).name
                 return send_file(path, as_attachment=True)
             except:
-                flash('No se puede acceder al sitio', 'notify')
-                flash(data, 'text')
-                return redirect(url_for('front'))
+                flash("No se puede acceder al sitio", "notify")
+                flash(data, "text")
+                return redirect(url_for("front"))
         else:
-            flash('Por favor, ingresa una URL válida', 'notify')
+            flash("Por favor, ingresa una URL válida", "notify")
             if data:
-                flash(data, 'text')
-            return redirect(url_for('front'))
-    return render_template('front.html')
+                flash(data, "text")
+            return redirect(url_for("front"))
+    return render_template("front.html")
 
 
 def main():
