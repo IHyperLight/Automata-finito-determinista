@@ -4,10 +4,12 @@ from bs4 import BeautifulSoup
 import urllib.request
 import re
 import automaton
+import os
 
 app = Flask(__name__)
 
-app.secret_key = "llave_secreta"
+# Usar variable de entorno para la clave secreta, con fallback para desarrollo
+app.secret_key = os.environ.get('SECRET_KEY', 'llave_secreta')
 
 
 class UrlForm(Form):
@@ -58,7 +60,10 @@ def front():
 
 
 def main():
-    app.run(debug=True, port="5000", host="0.0.0.0")
+    # Obtener puerto y configuración desde variables de entorno
+    port = int(os.environ.get('PORT', 5000))
+    debug = os.environ.get('FLASK_ENV') != 'production'
+    app.run(debug=debug, port=port, host="0.0.0.0")
 
 
 if __name__ == "__main__":
